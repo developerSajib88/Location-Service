@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:location/location.dart';
 
 void main() {
@@ -38,6 +39,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool? _serviceEnabled;
   PermissionStatus? _permissionGranted;
   LocationData? _locationData;
+  String addressName = "";
 
 
 
@@ -61,9 +63,25 @@ class _MyHomePageState extends State<MyHomePage> {
     location.enableBackgroundMode(enable: true);
     location.onLocationChanged.listen((LocationData currentLocation){
       _locationData = currentLocation;
-      setState(() {});
     });
+
+    addressName = await getLocationName(_locationData?.latitude ?? 0.00, _locationData?.longitude ?? 0.00);
+    setState(() {});
+
   }
+
+
+  Future<String> getLocationName(double latitude, double longitude) async {
+    try {
+      List<geocoding.Placemark> placeMarks = await geocoding.placemarkFromCoordinates(latitude, longitude);
+      geocoding.Placemark place = placeMarks[0];
+      return "${place.street}${place.thoroughfare}, ${place.subLocality}, ${place.locality}-${place.postalCode}, ${place.country}";
+    } catch (e) {
+      return "Location not found";
+    }
+  }
+
+
 
   @override
   void initState() {
@@ -74,6 +92,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -91,7 +111,9 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             Text("Altitude: ${_locationData?.altitude ?? ""}"),
 
-            Text("Accuracy: ${_locationData?.accuracy ?? ""}")
+            Text("Accuracy: ${_locationData?.accuracy ?? ""}"),
+
+            Text("Address: $addressName")
           ],
         ),
       ),
